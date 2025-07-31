@@ -11,6 +11,8 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/categories", categoryRouter);
 
+// gloabal error handler only handle the synchronus errors
+
 app.use(globalErrorHandler);
 
 export default app;
