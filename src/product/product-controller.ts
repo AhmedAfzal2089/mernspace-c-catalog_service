@@ -124,6 +124,7 @@ export class ProductController {
         const { q, tenantId, categoryId, isPublish } = req.query;
 
         const filters: Filter = {};
+        // always validate these fields, or this will send undefined, and there will be error
         if (isPublish === "true") {
             filters.isPublish = true;
         }
