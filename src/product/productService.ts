@@ -1,5 +1,6 @@
+import { paginationLabels } from "../config/pagination";
 import productModel from "./product-model";
-import { Filter, Product } from "./product-types";
+import { Filter, PaginateQuery, Product } from "./product-types";
 
 export class ProductService {
     async createProduct(product: Product): Promise<Product | null> {
@@ -23,7 +24,11 @@ export class ProductService {
     async getProduct(productId: string): Promise<Product | null> {
         return await productModel.findOne({ _id: productId });
     }
-    async getProducts(q: string, filters: Filter) {
+    async getProducts(
+        q: string,
+        filters: Filter,
+        paginateQuery: PaginateQuery,
+    ) {
         // logic for filters in mongodb
         const searchQueryRegexp = new RegExp(q, "i"); // i for case insensitive
         const matchQuery = {
@@ -59,7 +64,9 @@ export class ProductService {
                 $unwind: "$category",
             },
         ]);
-        const result = await aggregate.exec();
-        return result as Product[];
+        return productModel.aggregatePaginate(aggregate, {
+            ...paginateQuery,
+            customLabels: paginationLabels,
+        });
     }
 }

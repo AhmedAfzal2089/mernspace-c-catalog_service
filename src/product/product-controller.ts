@@ -12,7 +12,6 @@ import { Roles } from "../common/constants";
 import mongoose from "mongoose";
 import { Request as SimpleRequest } from "express";
 import { Logger } from "winston";
-import { ProductDocument } from "./product-model";
 
 export class ProductController {
     constructor(
@@ -59,9 +58,7 @@ export class ProductController {
             isPublish,
             image: imageName,
         };
-        const newProduct = (await this.productService.createProduct(
-            products,
-        )) as ProductDocument;
+        const newProduct = await this.productService.createProduct(products);
         res.json({ id: newProduct?._id });
     };
     update = async (req: Request, res: Response, next: NextFunction) => {
@@ -144,6 +141,12 @@ export class ProductController {
         const products = await this.productService.getProducts(
             q as string,
             filters,
+            {
+                page: req.query.page ? parseInt(req.query.page as string) : 1,
+                limit: req.query.limit
+                    ? parseInt(req.query.limit as string)
+                    : 10,
+            },
         );
         if (!products) {
             this.logger.info("Error in Fetching The Products");
