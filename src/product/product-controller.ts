@@ -7,6 +7,8 @@ import { CreateProductRequest, Product } from "./product-types";
 import { FileStorage } from "../common/types/storage";
 import { UploadedFile } from "express-fileupload";
 import { Request } from "express-jwt";
+import { AuthRequest } from "../common/types";
+import { Roles } from "../common/constants";
 
 export class ProductController {
     constructor(
@@ -63,6 +65,21 @@ export class ProductController {
             return next(createHttpError(400, result.array()[0].msg as string));
         }
         const { productId } = req.params;
+        const product = await this.productService.getProduct(productId);
+        if (!product) {
+            return next(createHttpError(400, "Product not Found"));
+        }
+        if ((req as AuthRequest).auth.role !== Roles.ADMIN) {
+            const tenant = (req as AuthRequest).auth.tenant;
+            if (product.tenantId !== String(tenant)) {
+                return next(
+                    createHttpError(
+                        403,
+                        "You are not allowed to access this product ",
+                    ),
+                );
+            }
+        }
         let imageName: string | undefined;
         let oldImage: string | undefined;
         if (req.files?.image) {
@@ -84,7 +101,7 @@ export class ProductController {
             categoryId,
             isPublish,
         } = req.body;
-        const products = {
+        const productToUpdate = {
             name,
             description,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -96,7 +113,7 @@ export class ProductController {
             isPublish,
             image: imageName ? imageName : (oldImage as string),
         };
-        await this.productService.updateProduct(productId, products);
+        await this.productService.updateProduct(productId, productToUpdate);
         res.json({ id: productId });
     };
 }
