@@ -10,13 +10,18 @@ import fileUpload from "express-fileupload";
 import { S3Storage } from "../common/services/S3Storage";
 import createHttpError from "http-errors";
 import updateProductValidator from "./update-product-validator";
+import logger from "../config/logger";
 
 const router = express.Router();
 
 // dependency injection
 const productService = new ProductService();
 const s3Storage = new S3Storage();
-const productController = new ProductController(productService, s3Storage);
+const productController = new ProductController(
+    productService,
+    s3Storage,
+    logger,
+);
 
 router.post(
     "/",
@@ -48,5 +53,6 @@ router.put(
     updateProductValidator,
     asyncWrapper(productController.update),
 );
+router.get("/", asyncWrapper(productController.index));
 
 export default router;

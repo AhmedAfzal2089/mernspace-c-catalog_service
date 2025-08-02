@@ -3,17 +3,21 @@ import { validationResult } from "express-validator";
 import createHttpError from "http-errors";
 import { v4 as uuidv4 } from "uuid";
 import { ProductService } from "./productService";
-import { CreateProductRequest, Product } from "./product-types";
+import { CreateProductRequest, Filter, Product } from "./product-types";
 import { FileStorage } from "../common/types/storage";
 import { UploadedFile } from "express-fileupload";
 import { Request } from "express-jwt";
 import { AuthRequest } from "../common/types";
 import { Roles } from "../common/constants";
+import mongoose from "mongoose";
+import { Request as SimpleRequest } from "express";
+import { Logger } from "winston";
 
 export class ProductController {
     constructor(
         private productService: ProductService,
         private storage: FileStorage, // dependency inversion
+        private logger: Logger,
     ) {
         // if we use arrow function then we dont have to bind here..
     }
@@ -115,5 +119,35 @@ export class ProductController {
         };
         await this.productService.updateProduct(productId, productToUpdate);
         res.json({ id: productId });
+    };
+    index = async (req: SimpleRequest, res: Response) => {
+        const { q, tenantId, categoryId, isPublish } = req.query;
+
+        const filters: Filter = {};
+        if (isPublish === "true") {
+            filters.isPublish = true;
+        }
+        if (tenantId) {
+            filters.tenantId = tenantId as string;
+        }
+        if (
+            categoryId &&
+            mongoose.Types.ObjectId.isValid(categoryId as string)
+        ) {
+            // in query the category id is simple string , so we are storing category id in db according to format of mongodb
+            filters.categoryId = new mongoose.Types.ObjectId(
+                categoryId as string,
+            );
+        }
+        const products = await this.productService.getProducts(
+            q as string,
+            filters,
+        );
+        if (!products) {
+            this.logger.info("Error in Fetching The Products");
+        } else {
+            this.logger.info(" Products Fetched ");
+        }
+        res.json(products);
     };
 }
