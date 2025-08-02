@@ -9,6 +9,7 @@ import { ProductService } from "./productService";
 import fileUpload from "express-fileupload";
 import { S3Storage } from "../common/services/S3Storage";
 import createHttpError from "http-errors";
+import updateProductValidator from "./update-product-validator";
 
 const router = express.Router();
 
@@ -32,6 +33,20 @@ router.post(
     createProductValidator,
     asyncWrapper(productController.create),
 );
-router.patch("/:id");
+router.put(
+    "/:productId",
+    authenticate,
+    canAccess([Roles.ADMIN, Roles.MANAGER]),
+    fileUpload({
+        limits: { fileSize: 500 * 1024 }, //500 kb
+        abortOnLimit: true,
+        limitHandler: (req, res, next) => {
+            const error = createHttpError(400, "File size exceeds the limit");
+            next(error);
+        },
+    }),
+    updateProductValidator,
+    asyncWrapper(productController.update),
+);
 
 export default router;
