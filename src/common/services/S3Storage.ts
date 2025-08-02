@@ -5,6 +5,7 @@ import {
 } from "@aws-sdk/client-s3";
 import config from "config";
 import { FileData, FileStorage } from "../types/storage";
+import createHttpError from "http-errors";
 
 export class S3Storage implements FileStorage {
     private client: S3Client;
@@ -41,7 +42,15 @@ export class S3Storage implements FileStorage {
         // @ts-ignore
         return await this.client.send(new DeleteObjectCommand(objectParams));
     }
-    getObjectUri(): string {
-        throw new Error("Method not implemented.");
+    getObjectUri(filename: string): string {
+        // https://mernspace-project-gyan.s3.ap-south-1.amazonaws.com/2030ffd6-5da0-4434-b2e3-ac260cf261dc
+
+        const bucket = config.get("s3.bucket");
+        const region = config.get("s3.region");
+        if (typeof bucket === "string" && typeof region === "string") {
+            return `https://${bucket}.s3.${region}.amazonaws.com/${filename}`;
+        }
+        const error = createHttpError(500, "Invalid S3 configuration");
+        throw error;
     }
 }

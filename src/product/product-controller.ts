@@ -3,7 +3,7 @@ import { validationResult } from "express-validator";
 import createHttpError from "http-errors";
 import { v4 as uuidv4 } from "uuid";
 import { ProductService } from "./productService";
-import { CreateProductRequest, Filter } from "./product-types";
+import { CreateProductRequest, Filter, Product } from "./product-types";
 import { FileStorage } from "../common/types/storage";
 import { UploadedFile } from "express-fileupload";
 import { Request } from "express-jwt";
@@ -153,6 +153,19 @@ export class ProductController {
         } else {
             this.logger.info(" Products Fetched ");
         }
-        res.json(products);
+        const finalProducts = (products.data as Product[]).map(
+            (product: Product) => {
+                return {
+                    ...product,
+                    image: this.storage.getObjectUri(product.image),
+                };
+            },
+        );
+        res.json({
+            data: finalProducts,
+            total: products.total,
+            pageSize: products.limit,
+            currentPage: products.page,
+        });
     };
 }
