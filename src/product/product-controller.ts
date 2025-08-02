@@ -3,7 +3,7 @@ import { validationResult } from "express-validator";
 import createHttpError from "http-errors";
 import { v4 as uuidv4 } from "uuid";
 import { ProductService } from "./productService";
-import { CreateProductRequest, Filter, Product } from "./product-types";
+import { CreateProductRequest, Filter } from "./product-types";
 import { FileStorage } from "../common/types/storage";
 import { UploadedFile } from "express-fileupload";
 import { Request } from "express-jwt";
@@ -12,6 +12,7 @@ import { Roles } from "../common/constants";
 import mongoose from "mongoose";
 import { Request as SimpleRequest } from "express";
 import { Logger } from "winston";
+import { ProductDocument } from "./product-model";
 
 export class ProductController {
     constructor(
@@ -58,10 +59,10 @@ export class ProductController {
             isPublish,
             image: imageName,
         };
-        const newProduct = await this.productService.createProduct(
-            products as unknown as Product,
-        );
-        res.json({ id: newProduct._id });
+        const newProduct = (await this.productService.createProduct(
+            products,
+        )) as ProductDocument;
+        res.json({ id: newProduct?._id });
     };
     update = async (req: Request, res: Response, next: NextFunction) => {
         const result = validationResult(req);

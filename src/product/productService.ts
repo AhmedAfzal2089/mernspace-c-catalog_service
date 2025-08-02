@@ -2,11 +2,14 @@ import productModel from "./product-model";
 import { Filter, Product } from "./product-types";
 
 export class ProductService {
-    async createProduct(product: Product) {
-        return await productModel.create(product);
+    async createProduct(product: Product): Promise<Product | null> {
+        return (await productModel.create(product)) as Product;
     }
 
-    async updateProduct(productId: string, product: Product) {
+    async updateProduct(
+        productId: string,
+        product: Product,
+    ): Promise<Product | null> {
         return await productModel.findOneAndUpdate(
             { _id: productId },
             {
@@ -17,7 +20,7 @@ export class ProductService {
             },
         );
     }
-    async getProduct(productId: string) {
+    async getProduct(productId: string): Promise<Product | null> {
         return await productModel.findOne({ _id: productId });
     }
     async getProducts(q: string, filters: Filter) {

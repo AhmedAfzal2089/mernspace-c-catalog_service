@@ -1,4 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
+import { Product } from "./product-types";
+export interface ProductDocument extends Product, Document {}
 
 const attributeValueSchema = new mongoose.Schema({
     name: {
@@ -57,4 +59,4 @@ const productSchema = new mongoose.Schema(
     { timestamps: true },
 );
 
-export default mongoose.model("Product", productSchema);
+export default mongoose.model<ProductDocument>("Product", productSchema);
