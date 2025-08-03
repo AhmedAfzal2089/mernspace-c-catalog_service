@@ -77,4 +77,13 @@ export class ToppingController {
             currentPage: toppings.page,
         });
     };
+    getOne = async (req: SimpleRequest, res: Response, next: NextFunction) => {
+        const { toppingId } = req.params;
+        const topping = await this.toppingService.getOne(toppingId);
+        if (!topping) {
+            return next(createHttpError(400, "Topping not Found "));
+        }
+        topping.image = this.storage.getObjectUri(topping.image);
+        res.json(topping);
+    };
 }

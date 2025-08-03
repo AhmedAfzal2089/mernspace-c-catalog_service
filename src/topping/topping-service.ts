@@ -22,4 +22,7 @@ export class ToppingService {
             customLabels: paginationLabels,
         });
     }
+    async getOne(toppingId: string): Promise<Topping | null> {
+        return await toppingModel.findOne({ _id: toppingId });
+    }
 }
