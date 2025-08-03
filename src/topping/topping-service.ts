@@ -28,4 +28,15 @@ export class ToppingService {
     async delete(toppingId: string) {
         return await toppingModel.deleteOne({ _id: toppingId });
     }
+    async updateTopping(toppingId: string, topping: Topping) {
+        return await toppingModel.findOneAndUpdate(
+            { _id: toppingId },
+            {
+                $set: topping,
+            },
+            {
+                new: true,
+            },
+        );
+    }
 }

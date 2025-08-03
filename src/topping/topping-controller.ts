@@ -9,6 +9,8 @@ import { ToppingService } from "./topping-service";
 import { validationResult } from "express-validator";
 import createHttpError from "http-errors";
 import { Request } from "express-jwt";
+import { AuthRequest } from "../common/types";
+import { Roles } from "../common/constants";
 
 export class ToppingController {
     constructor(
@@ -96,5 +98,50 @@ export class ToppingController {
         await this.storage.delete(topping.image);
         await this.toppingService.delete(toppingId);
         res.json(true);
+    };
+    update = async (req: Request, res: Response, next: NextFunction) => {
+        const result = validationResult(req);
+        if (!result.isEmpty()) {
+            return next(createHttpError(400, result.array()[0].msg as string));
+        }
+        const { toppingId } = req.params;
+        const topping = await this.toppingService.getOne(toppingId);
+        if (!topping) {
+            return next(createHttpError(400, "topping not found"));
+        }
+        if ((req as AuthRequest).auth.role !== Roles.ADMIN) {
+            const tenant = (req as AuthRequest).auth.tenant;
+            if (topping.tenantId !== String(tenant)) {
+                return next(
+                    createHttpError(
+                        403,
+                        "You are not allowed to access this product ",
+                    ),
+                );
+            }
+        }
+        let imageName: string | undefined;
+        let oldImage: string | undefined;
+        if (req.files?.image) {
+            oldImage = topping.image;
+            const image = req.files.image as UploadedFile;
+            imageName = uuidv4();
+            await this.storage.upload({
+                filename: imageName,
+                fileData: image.data.buffer,
+            });
+            await this.storage.delete(oldImage);
+        }
+        const { name, price, image, tenantId } = req.body;
+        const updateTopping = {
+            name,
+            price,
+            image: imageName ? imageName : (oldImage as string),
+            tenantId,
+        };
+        await this.toppingService.updateTopping(toppingId, updateTopping);
+        res.json({
+            id: toppingId,
+        });
     };
 }
