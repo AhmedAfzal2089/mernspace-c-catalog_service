@@ -55,5 +55,6 @@ router.put(
 );
 router.get("/", asyncWrapper(productController.index));
 router.get("/:productId", asyncWrapper(productController.getSingleProduct));
+router.delete("/:productId", asyncWrapper(productController.deleteProduct));
 
 export default router;

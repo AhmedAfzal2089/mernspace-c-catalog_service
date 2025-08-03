@@ -184,4 +184,14 @@ export class ProductController {
 
         res.json(product);
     };
+    deleteProduct = async (req: Request, res: Response, next: NextFunction) => {
+        const { productId } = req.params;
+        const product = await this.productService.getProduct(productId);
+        if (!product) {
+            return next(createHttpError(400, "Error in Deleting the Product"));
+        }
+        await this.storage.delete(product.image);
+        await this.productService.deleteProduct(productId);
+        res.json(true);
+    };
 }
