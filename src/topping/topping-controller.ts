@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ToppingService } from "./topping-service";
 import { validationResult } from "express-validator";
 import createHttpError from "http-errors";
+import { Request } from "express-jwt";
 
 export class ToppingController {
     constructor(
@@ -85,5 +86,15 @@ export class ToppingController {
         }
         topping.image = this.storage.getObjectUri(topping.image);
         res.json(topping);
+    };
+    deleteOne = async (req: Request, res: Response, next: NextFunction) => {
+        const { toppingId } = req.params;
+        const topping = await this.toppingService.getOne(toppingId);
+        if (!topping) {
+            return next(createHttpError(400, "Error in Deleting the topping"));
+        }
+        await this.storage.delete(topping.image);
+        await this.toppingService.delete(toppingId);
+        res.json(true);
     };
 }

@@ -25,4 +25,7 @@ export class ToppingService {
     async getOne(toppingId: string): Promise<Topping | null> {
         return await toppingModel.findOne({ _id: toppingId });
     }
+    async delete(toppingId: string) {
+        return await toppingModel.deleteOne({ _id: toppingId });
+    }
 }
