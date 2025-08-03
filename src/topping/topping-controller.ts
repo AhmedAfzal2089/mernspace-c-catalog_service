@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Logger } from "winston";
-import { NextFunction, Response } from "express";
-import { CreateToppingRequest, Topping } from "./topping-types";
+import { NextFunction, Request as SimpleRequest, Response } from "express";
+import { CreateToppingRequest, Filter, Topping } from "./topping-types";
 import { FileStorage } from "../common/types/storage";
 import { UploadedFile } from "express-fileupload";
 import { v4 as uuidv4 } from "uuid";
@@ -42,5 +42,39 @@ export class ToppingController {
         } catch (err) {
             return next(err);
         }
+    };
+    getAllToppings = async (req: SimpleRequest, res: Response) => {
+        const { q, tenantId } = req.query;
+        const filters: Filter = {};
+        if (tenantId) {
+            filters.tenantId = tenantId as string;
+        }
+        const toppings = await this.toppingService.getAll(
+            q as string,
+            filters,
+            {
+                page: req.query.page ? parseInt(req.query.page as string) : 1,
+                limit: req.query.limit
+                    ? parseInt(req.query.limit as string)
+                    : 10,
+            },
+        );
+        if (!toppings) {
+            this.logger.error("Error in Fetching the products");
+        }
+        const finalToppings = (toppings.data as Topping[]).map(
+            (topping: Topping) => {
+                return {
+                    ...topping,
+                    image: this.storage.getObjectUri(topping.image),
+                };
+            },
+        );
+        res.json({
+            data: finalToppings,
+            total: toppings.total,
+            pageSize: toppings.limit,
+            currentPage: toppings.page,
+        });
     };
 }

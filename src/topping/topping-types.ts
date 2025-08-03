@@ -12,3 +12,10 @@ export interface Topping {
 export interface CreateToppingRequest extends Request {
     body: Topping;
 }
+export interface Filter {
+    tenantId?: string;
+}
+export interface PaginateQuery {
+    page: number;
+    limit: number;
+}

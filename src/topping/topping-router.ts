@@ -37,5 +37,6 @@ router.post(
     createToppingValidator,
     asyncWrapper(toppingController.create),
 );
+router.get("/", asyncWrapper(toppingController.getAllToppings));
 
 export default router;
