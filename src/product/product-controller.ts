@@ -168,4 +168,20 @@ export class ProductController {
             currentPage: products.page,
         });
     };
+    getSingleProduct = async (
+        req: SimpleRequest,
+        res: Response,
+        next: NextFunction,
+    ) => {
+        const { productId } = req.params;
+        const product = await this.productService.getProduct(productId);
+        if (!product) {
+            return next(createHttpError(400, "Product Not Found!"));
+        } else {
+            this.logger.info("Product Have Been Found", { id: product._id });
+        }
+        product.image = this.storage.getObjectUri(product?.image);
+
+        res.json(product);
+    };
 }
