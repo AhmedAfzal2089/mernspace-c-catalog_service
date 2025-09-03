@@ -33,7 +33,7 @@ export class ToppingController {
             const fileUuid = uuidv4();
             await this.storage.upload({
                 filename: fileUuid,
-                fileData: image.data.buffer,
+                fileData: image.data,
             });
             const savedTopping = await this.toppingService.create({
                 ...topping,
@@ -128,7 +128,7 @@ export class ToppingController {
             imageName = uuidv4();
             await this.storage.upload({
                 filename: imageName,
-                fileData: image.data.buffer,
+                fileData: image.data,
             });
             await this.storage.delete(oldImage);
         }

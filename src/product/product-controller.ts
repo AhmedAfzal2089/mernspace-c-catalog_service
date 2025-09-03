@@ -12,12 +12,14 @@ import { Roles } from "../common/constants";
 import mongoose from "mongoose";
 import { Request as SimpleRequest } from "express";
 import { Logger } from "winston";
+import { MessageProducerBroker } from "../common/types/broker";
 
 export class ProductController {
     constructor(
         private productService: ProductService,
         private storage: FileStorage, // dependency inversion
         private logger: Logger,
+        private broker: MessageProducerBroker,
     ) {
         // if we use arrow function then we dont have to bind here..
     }
@@ -59,6 +61,15 @@ export class ProductController {
             image: imageName,
         };
         const newProduct = await this.productService.createProduct(products);
+        // send product to kafka
+        // todo: move config name to config
+        await this.broker.sendMessage(
+            "product",
+            JSON.stringify({
+                id: newProduct?._id,
+                priceConfiguration: newProduct?.priceConfiguration,
+            }),
+        );
         res.json({ id: newProduct?._id });
     };
     update = async (req: Request, res: Response, next: NextFunction) => {
@@ -115,7 +126,20 @@ export class ProductController {
             isPublish,
             image: imageName ? imageName : (oldImage as string),
         };
-        await this.productService.updateProduct(productId, productToUpdate);
+        const updatedProduct = await this.productService.updateProduct(
+            productId,
+            productToUpdate,
+        );
+
+        //todo: send product to kafka ,
+        await this.broker.sendMessage(
+            "product",
+            JSON.stringify({
+                id: updatedProduct?._id,
+                priceConfiguration: updatedProduct?.priceConfiguration,
+            }),
+        );
+
         res.json({ id: productId });
     };
     index = async (req: SimpleRequest, res: Response) => {
