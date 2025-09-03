@@ -13,6 +13,7 @@ import mongoose from "mongoose";
 import { Request as SimpleRequest } from "express";
 import { Logger } from "winston";
 import { MessageProducerBroker } from "../common/types/broker";
+import { mapToObject } from "../utils";
 
 export class ProductController {
     constructor(
@@ -66,8 +67,14 @@ export class ProductController {
         await this.broker.sendMessage(
             "product",
             JSON.stringify({
-                id: newProduct?._id,
-                priceConfiguration: newProduct?.priceConfiguration,
+                id: newProduct!._id,
+                // todo: fix the typescript error
+                priceConfiguration: mapToObject(
+                    newProduct!.priceConfiguration as unknown as Map<
+                        string,
+                        any
+                    >,
+                ),
             }),
         );
         res.json({ id: newProduct?._id });
@@ -135,8 +142,13 @@ export class ProductController {
         await this.broker.sendMessage(
             "product",
             JSON.stringify({
-                id: updatedProduct?._id,
-                priceConfiguration: updatedProduct?.priceConfiguration,
+                id: updatedProduct!._id,
+                priceConfiguration: mapToObject(
+                    updatedProduct!.priceConfiguration as unknown as Map<
+                        string,
+                        any
+                    >,
+                ),
             }),
         );
 
