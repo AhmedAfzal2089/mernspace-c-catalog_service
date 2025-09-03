@@ -11,12 +11,14 @@ import createHttpError from "http-errors";
 import { Request } from "express-jwt";
 import { AuthRequest } from "../common/types";
 import { Roles } from "../common/constants";
+import { MessageProducerBroker } from "../common/types/broker";
 
 export class ToppingController {
     constructor(
         private toppingService: ToppingService,
         private logger: Logger,
         private storage: FileStorage,
+        private broker: MessageProducerBroker,
     ) {}
     create = async (
         req: CreateToppingRequest,
@@ -40,6 +42,15 @@ export class ToppingController {
                 image: fileUuid,
                 tenantId: req.body.tenantId,
             } as Topping);
+            // send product to kafka
+            // todo: move config name to config
+            await this.broker.sendMessage(
+                "topping",
+                JSON.stringify({
+                    id: savedTopping?._id,
+                    price: savedTopping?.price,
+                }),
+            );
             res.json({ id: savedTopping._id });
             this.logger.info("Product Created");
         } catch (err) {
@@ -139,7 +150,18 @@ export class ToppingController {
             image: imageName ? imageName : (oldImage as string),
             tenantId,
         };
-        await this.toppingService.updateTopping(toppingId, updateTopping);
+        const updatedTopping = await this.toppingService.updateTopping(
+            toppingId,
+            updateTopping,
+        );
+        // send topping to kafka ,
+        await this.broker.sendMessage(
+            "topping",
+            JSON.stringify({
+                id: updatedTopping?._id,
+                price: updatedTopping?.price,
+            }),
+        );
         res.json({
             id: toppingId,
         });
